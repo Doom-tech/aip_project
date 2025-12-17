@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>order</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+{% include "_nav.html" %}
+<div class="container py-4">
+  <div class="alert alert-success">
+    заказ создан: <b>{{ o.id }}</b>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6>данные</h6>
+          <div>имя: <b>{{ o.nm }}</b></div>
+          <div>email: <b>{{ o.em }}</b></div>
+          <div>адрес: <b>{{ o.ad }}</b></div>
+          <div>оплата: <b>{{ o.pm }}</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6>товары</h6>
+          <ul class="list-group list-group-flush">
+            {% for r in o.rows %}
+              <li class="list-group-item d-flex justify-content-between">
+                <span class="small">{{ r.nm }} × {{ r.q }}</span>
+                <span class="small"><b>{{ r.sm }}</b> ₽</span>
+              </li>
+            {% endfor %}
+          </ul>
+          <div class="d-flex justify-content-between mt-2">
+            <span>итого</span><span class="fs-5"><b>{{ o.ttl }}</b> ₽</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a class="btn btn-primary mt-3" href="/shop">вернуться в каталог</a>
+</div>
+</body>
+</html>

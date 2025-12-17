@@ -1,0 +1,48 @@
+{
+  "thr": 7,
+  "ign_ua": [
+    "Prometheus",
+    "kube-probe"
+  ],
+  "rls": [
+    {
+      "rid": "sqli_2",
+      "rtp": "re",
+      "w": 6,
+      "ps": [
+        "\\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP)\\b"
+      ],
+      "fld": "req"
+    },
+    {
+      "rid": "xss_1",
+      "rtp": "re",
+      "w": 5,
+      "ps": [
+        "<\\s*script\\b",
+        "onerror\\s*=",
+        "onload\\s*="
+      ],
+      "fld": "req"
+    },
+    {
+      "rid": "trav_1",
+      "rtp": "sub",
+      "w": 4,
+      "ps": [
+        "../",
+        "%2e%2e%2f"
+      ],
+      "fld": "req"
+    },
+    {
+      "rid": "ua_1",
+      "rtp": "re",
+      "w": 3,
+      "ps": [
+        "\\b(sqlmap|nikto|nmap|acunetix|masscan)\\b"
+      ],
+      "fld": "ua"
+    }
+  ]
+}

@@ -1,0 +1,754 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API &mdash; waflite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            waflite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.core.CfgErr"><code class="docutils literal notranslate"><span class="pre">CfgErr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.core.Rl"><code class="docutils literal notranslate"><span class="pre">Rl</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.core.WfErr"><code class="docutils literal notranslate"><span class="pre">WfErr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.core.dec"><code class="docutils literal notranslate"><span class="pre">dec()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.core.mtch"><code class="docutils literal notranslate"><span class="pre">mtch()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.core.nrq"><code class="docutils literal notranslate"><span class="pre">nrq()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.core.scr"><code class="docutils literal notranslate"><span class="pre">scr()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.io.InpErr"><code class="docutils literal notranslate"><span class="pre">InpErr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.io.PrsRes"><code class="docutils literal notranslate"><span class="pre">PrsRes</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.io.PrsRes.asd"><code class="docutils literal notranslate"><span class="pre">PrsRes.asd()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.io.prs"><code class="docutils literal notranslate"><span class="pre">prs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.io.prs_ng"><code class="docutils literal notranslate"><span class="pre">prs_ng()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.io.prs_raw"><code class="docutils literal notranslate"><span class="pre">prs_raw()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.io.rdln"><code class="docutils literal notranslate"><span class="pre">rdln()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.rules.dfl_rls"><code class="docutils literal notranslate"><span class="pre">dfl_rls()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.rules.ld_cfg"><code class="docutils literal notranslate"><span class="pre">ld_cfg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.rules.ld_rls"><code class="docutils literal notranslate"><span class="pre">ld_rls()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.rep.OutErr"><code class="docutils literal notranslate"><span class="pre">OutErr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.rep.wr_csv"><code class="docutils literal notranslate"><span class="pre">wr_csv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.rep.wr_jsonl"><code class="docutils literal notranslate"><span class="pre">wr_jsonl()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.cli.run_cli"><code class="docutils literal notranslate"><span class="pre">run_cli()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.webapp.DbErr"><code class="docutils literal notranslate"><span class="pre">DbErr</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.webapp.mk_app"><code class="docutils literal notranslate"><span class="pre">mk_app()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.api.BatchIn"><code class="docutils literal notranslate"><span class="pre">BatchIn</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.BatchIn.items"><code class="docutils literal notranslate"><span class="pre">BatchIn.items</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.BatchIn.model_config"><code class="docutils literal notranslate"><span class="pre">BatchIn.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.api.BatchOut"><code class="docutils literal notranslate"><span class="pre">BatchOut</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.BatchOut.items"><code class="docutils literal notranslate"><span class="pre">BatchOut.items</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.BatchOut.n"><code class="docutils literal notranslate"><span class="pre">BatchOut.n</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.BatchOut.model_config"><code class="docutils literal notranslate"><span class="pre">BatchOut.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.api.ScanIn"><code class="docutils literal notranslate"><span class="pre">ScanIn</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanIn.ip"><code class="docutils literal notranslate"><span class="pre">ScanIn.ip</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanIn.req"><code class="docutils literal notranslate"><span class="pre">ScanIn.req</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanIn.ua"><code class="docutils literal notranslate"><span class="pre">ScanIn.ua</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanIn.st"><code class="docutils literal notranslate"><span class="pre">ScanIn.st</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanIn.model_config"><code class="docutils literal notranslate"><span class="pre">ScanIn.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.api.ScanOut"><code class="docutils literal notranslate"><span class="pre">ScanOut</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanOut.scr"><code class="docutils literal notranslate"><span class="pre">ScanOut.scr</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanOut.dec"><code class="docutils literal notranslate"><span class="pre">ScanOut.dec</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanOut.thr"><code class="docutils literal notranslate"><span class="pre">ScanOut.thr</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanOut.m"><code class="docutils literal notranslate"><span class="pre">ScanOut.m</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.ScanOut.model_config"><code class="docutils literal notranslate"><span class="pre">ScanOut.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.api.StatsOut"><code class="docutils literal notranslate"><span class="pre">StatsOut</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.StatsOut.up_s"><code class="docutils literal notranslate"><span class="pre">StatsOut.up_s</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.StatsOut.scans"><code class="docutils literal notranslate"><span class="pre">StatsOut.scans</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.StatsOut.blocks"><code class="docutils literal notranslate"><span class="pre">StatsOut.blocks</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waflite.api.StatsOut.model_config"><code class="docutils literal notranslate"><span class="pre">StatsOut.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#waflite.api.mk_api"><code class="docutils literal notranslate"><span class="pre">mk_api()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">waflite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-waflite.core">
+<span id="api"></span><h1>API<a class="headerlink" href="#module-waflite.core" title="Link to this heading"></a></h1>
+<p>Core scanning/decision logic.</p>
+<p>The module contains scoring rules and request normalization utilities.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="waflite.core.CfgErr">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.core.</span></span><span class="sig-name descname"><span class="pre">CfgErr</span></span><a class="reference internal" href="_modules/waflite/core.html#CfgErr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.core.CfgErr" title="Link to this definition"></a></dt>
+<dd><p>Raised when config/rules are invalid.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="waflite.core.Rl">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.core.</span></span><span class="sig-name descname"><span class="pre">Rl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fld</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'req'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/waflite/core.html#Rl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.core.Rl" title="Link to this definition"></a></dt>
+<dd><p>Single detection rule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rid</strong> – Rule identifier.</p></li>
+<li><p><strong>rtp</strong> – Rule type (e.g. “re”, “sub”).</p></li>
+<li><p><strong>w</strong> – Rule weight (score add).</p></li>
+<li><p><strong>ps</strong> – Patterns (regexes or substrings depending on type).</p></li>
+<li><p><strong>fld</strong> – Field name in request dict to inspect.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="waflite.core.WfErr">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.core.</span></span><span class="sig-name descname"><span class="pre">WfErr</span></span><a class="reference internal" href="_modules/waflite/core.html#WfErr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.core.WfErr" title="Link to this definition"></a></dt>
+<dd><p>Base exception for waflite.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.core.dec">
+<span class="sig-prename descclassname"><span class="pre">waflite.core.</span></span><span class="sig-name descname"><span class="pre">dec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/waflite/core.html#dec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.core.dec" title="Link to this definition"></a></dt>
+<dd><p>Decision from score.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>s</strong> – Score.</p></li>
+<li><p><strong>thr</strong> – Threshold.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>“block” if s &gt;= thr else “allow”.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.core.mtch">
+<span class="sig-prename descclassname"><span class="pre">waflite.core.</span></span><span class="sig-name descname"><span class="pre">mtch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#waflite.core.Rl" title="waflite.core.Rl"><span class="pre">Rl</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">rq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/waflite/core.html#mtch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.core.mtch" title="Link to this definition"></a></dt>
+<dd><p>Check if rule matches request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rl</strong> – Rule.</p></li>
+<li><p><strong>rq</strong> – Normalized request mapping.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if matched, else False.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#waflite.core.CfgErr" title="waflite.core.CfgErr"><strong>CfgErr</strong></a> – If rule has unsupported type.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.core.nrq">
+<span class="sig-prename descclassname"><span class="pre">waflite.core.</span></span><span class="sig-name descname"><span class="pre">nrq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/waflite/core.html#nrq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.core.nrq" title="Link to this definition"></a></dt>
+<dd><p>Normalize request dict.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>d</strong> – Request mapping (may be partial).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ip, req, ua, st.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>New dict with stable keys</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.core.scr">
+<span class="sig-prename descclassname"><span class="pre">waflite.core.</span></span><span class="sig-name descname"><span class="pre">scr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#waflite.core.Rl" title="waflite.core.Rl"><span class="pre">Rl</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/waflite/core.html#scr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.core.scr" title="Link to this definition"></a></dt>
+<dd><p>Compute total score and matched rule ids.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rls</strong> – Iterable of rules.</p></li>
+<li><p><strong>rq</strong> – Normalized request mapping.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(score, matched_rule_ids)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-waflite.io">I/O helpers and parsers for input lines.</p>
+<p>Supports:
+- nginx combined access log lines
+- raw request lines</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="waflite.io.InpErr">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.io.</span></span><span class="sig-name descname"><span class="pre">InpErr</span></span><a class="reference internal" href="_modules/waflite/io.html#InpErr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.io.InpErr" title="Link to this definition"></a></dt>
+<dd><p>Raised when input cannot be parsed.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="waflite.io.PrsRes">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.io.</span></span><span class="sig-name descname"><span class="pre">PrsRes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">req</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ua</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/waflite/io.html#PrsRes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.io.PrsRes" title="Link to this definition"></a></dt>
+<dd><p>Parsed request record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ip</strong> – Client IP.</p></li>
+<li><p><strong>req</strong> – Request line (e.g. “GET / HTTP/1.1”).</p></li>
+<li><p><strong>ua</strong> – User-Agent.</p></li>
+<li><p><strong>st</strong> – Status code (0 if unknown).</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="waflite.io.PrsRes.asd">
+<span class="sig-name descname"><span class="pre">asd</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/waflite/io.html#PrsRes.asd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.io.PrsRes.asd" title="Link to this definition"></a></dt>
+<dd><p>Convert to dict.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.io.prs">
+<span class="sig-prename descclassname"><span class="pre">waflite.io.</span></span><span class="sig-name descname"><span class="pre">prs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ln</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#waflite.io.PrsRes" title="waflite.io.PrsRes"><span class="pre">PrsRes</span></a></span></span><a class="reference internal" href="_modules/waflite/io.html#prs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.io.prs" title="Link to this definition"></a></dt>
+<dd><p>Dispatch parser by format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fmt</strong> – “nginx” or “raw”.</p></li>
+<li><p><strong>ln</strong> – Line.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed record.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#waflite.io.InpErr" title="waflite.io.InpErr"><strong>InpErr</strong></a> – If format is unsupported or parsing fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.io.prs_ng">
+<span class="sig-prename descclassname"><span class="pre">waflite.io.</span></span><span class="sig-name descname"><span class="pre">prs_ng</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ln</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#waflite.io.PrsRes" title="waflite.io.PrsRes"><span class="pre">PrsRes</span></a></span></span><a class="reference internal" href="_modules/waflite/io.html#prs_ng"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.io.prs_ng" title="Link to this definition"></a></dt>
+<dd><p>Parse nginx combined access log line.</p>
+<p>The parser is intentionally small and matches common combined format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ln</strong> – Nginx access log line.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed record (ip, request, ua, status).</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#waflite.io.InpErr" title="waflite.io.InpErr"><strong>InpErr</strong></a> – If line does not look like combined log.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.io.prs_raw">
+<span class="sig-prename descclassname"><span class="pre">waflite.io.</span></span><span class="sig-name descname"><span class="pre">prs_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ln</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#waflite.io.PrsRes" title="waflite.io.PrsRes"><span class="pre">PrsRes</span></a></span></span><a class="reference internal" href="_modules/waflite/io.html#prs_raw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.io.prs_raw" title="Link to this definition"></a></dt>
+<dd><p>Parse a raw request line.</p>
+<p>Expected formats:
+- “IP&lt;TAB&gt;REQ&lt;TAB&gt;UA”
+- “REQ” (IP/UA become empty)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ln</strong> – Input line.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed record.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.io.rdln">
+<span class="sig-prename descclassname"><span class="pre">waflite.io.</span></span><span class="sig-name descname"><span class="pre">rdln</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/waflite/io.html#rdln"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.io.rdln" title="Link to this definition"></a></dt>
+<dd><p>Read non-empty lines from a UTF-8 text file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> – Path to input file.</p>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p>Stripped lines.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#waflite.io.InpErr" title="waflite.io.InpErr"><strong>InpErr</strong></a> – If file cannot be read as UTF-8.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-waflite.rules">Rules and config loader.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.rules.dfl_rls">
+<span class="sig-prename descclassname"><span class="pre">waflite.rules.</span></span><span class="sig-name descname"><span class="pre">dfl_rls</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#waflite.core.Rl" title="waflite.core.Rl"><span class="pre">Rl</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/waflite/rules.html#dfl_rls"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.rules.dfl_rls" title="Link to this definition"></a></dt>
+<dd><p>Default ruleset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of rules with simple patterns for common web attacks.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.rules.ld_cfg">
+<span class="sig-prename descclassname"><span class="pre">waflite.rules.</span></span><span class="sig-name descname"><span class="pre">ld_cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/waflite/rules.html#ld_cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.rules.ld_cfg" title="Link to this definition"></a></dt>
+<dd><p>Load config JSON.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> – Path to config JSON or None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>thr, rls, ign_ua.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict with keys</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#waflite.core.CfgErr" title="waflite.core.CfgErr"><strong>CfgErr</strong></a> – If config cannot be loaded or invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.rules.ld_rls">
+<span class="sig-prename descclassname"><span class="pre">waflite.rules.</span></span><span class="sig-name descname"><span class="pre">ld_rls</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#waflite.core.Rl" title="waflite.core.Rl"><span class="pre">Rl</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/waflite/rules.html#ld_rls"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.rules.ld_rls" title="Link to this definition"></a></dt>
+<dd><p>Build rules from loaded config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>d</strong> – Config dict from ld_cfg.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(thr, rules, ign_ua)</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#waflite.core.CfgErr" title="waflite.core.CfgErr"><strong>CfgErr</strong></a> – If rules are malformed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-waflite.rep">Reporting utilities.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="waflite.rep.OutErr">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.rep.</span></span><span class="sig-name descname"><span class="pre">OutErr</span></span><a class="reference internal" href="_modules/waflite/rep.html#OutErr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.rep.OutErr" title="Link to this definition"></a></dt>
+<dd><p>Raised when report cannot be written.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.rep.wr_csv">
+<span class="sig-prename descclassname"><span class="pre">waflite.rep.</span></span><span class="sig-name descname"><span class="pre">wr_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/waflite/rep.html#wr_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.rep.wr_csv" title="Link to this definition"></a></dt>
+<dd><p>Write report as CSV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> – Output path.</p></li>
+<li><p><strong>rows</strong> – Iterable of dict-like rows.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#waflite.rep.OutErr" title="waflite.rep.OutErr"><strong>OutErr</strong></a> – On write errors.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.rep.wr_jsonl">
+<span class="sig-prename descclassname"><span class="pre">waflite.rep.</span></span><span class="sig-name descname"><span class="pre">wr_jsonl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/waflite/rep.html#wr_jsonl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.rep.wr_jsonl" title="Link to this definition"></a></dt>
+<dd><p>Write report as JSON Lines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> – Output path.</p></li>
+<li><p><strong>rows</strong> – Iterable of dict-like rows.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#waflite.rep.OutErr" title="waflite.rep.OutErr"><strong>OutErr</strong></a> – On write errors.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-waflite.cli">CLI for waflite.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.cli.run_cli">
+<span class="sig-prename descclassname"><span class="pre">waflite.cli.</span></span><span class="sig-name descname"><span class="pre">run_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/waflite/cli.html#run_cli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.cli.run_cli" title="Link to this definition"></a></dt>
+<dd><p>Run CLI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>argv</strong> – Arguments list without program name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Exit code (0 ok, 2 on handled error).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-waflite.webapp">Web app: панель правил + demo shop.</p>
+<p>Панель:
+- список правил
+- добавление/удаление
+- тест строки</p>
+<p>Shop (demo):
+- каталог, категории, поиск, сортировка
+- карточка товара
+- корзина (cookie)
+- checkout + создание заказа (в памяти, на время процесса)</p>
+<p>WAF: middleware для /shop и /api/shop.</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="waflite.webapp.DbErr">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.webapp.</span></span><span class="sig-name descname"><span class="pre">DbErr</span></span><a class="reference internal" href="_modules/waflite/webapp.html#DbErr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.webapp.DbErr" title="Link to this definition"></a></dt>
+<dd><p>Ошибка хранилища правил.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.webapp.mk_app">
+<span class="sig-prename descclassname"><span class="pre">waflite.webapp.</span></span><span class="sig-name descname"><span class="pre">mk_app</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dbp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FastAPI</span></span></span><a class="reference internal" href="_modules/waflite/webapp.html#mk_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.webapp.mk_app" title="Link to this definition"></a></dt>
+<dd><p>Create FastAPI app.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dbp</strong> – Path to rules db json.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>FastAPI app.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-waflite.webcli">CLI runner for web app.</p>
+<p id="module-waflite.api">HTTP API для WAF.</p>
+<p>Этот модуль дает отдельный API (без UI), чтобы:
+- проверять одиночный запрос (scan)
+- проверять пачку запросов (batch)
+- управлять базой правил (get/put)
+- получать статистику (stats)</p>
+<p>API сделан на FastAPI, чтобы:
+- была живая документация Swagger/OpenAPI на <cite>/docs</cite> и <cite>/openapi.json</cite>
+- удобно тестировать через TestClient</p>
+<p>Формат базы правил (db json):
+- thr: int
+- ign_ua: list[str]
+- rls: list[dict] (поля: rid, rtp, w, ps, fld)</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="waflite.api.BatchIn">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.api.</span></span><span class="sig-name descname"><span class="pre">BatchIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#waflite.api.ScanIn" title="waflite.api.ScanIn"><span class="pre">ScanIn</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/waflite/api.html#BatchIn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.api.BatchIn" title="Link to this definition"></a></dt>
+<dd><p>Input schema for batch scan.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.BatchIn.items">
+<span class="sig-name descname"><span class="pre">items</span></span><a class="headerlink" href="#waflite.api.BatchIn.items" title="Link to this definition"></a></dt>
+<dd><p>List of ScanIn objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#waflite.api.ScanIn" title="waflite.api.ScanIn">waflite.api.ScanIn</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.BatchIn.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#waflite.api.BatchIn.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="waflite.api.BatchOut">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.api.</span></span><span class="sig-name descname"><span class="pre">BatchOut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#waflite.api.ScanOut" title="waflite.api.ScanOut"><span class="pre">ScanOut</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/waflite/api.html#BatchOut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.api.BatchOut" title="Link to this definition"></a></dt>
+<dd><p>Output schema for batch scan.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.BatchOut.items">
+<span class="sig-name descname"><span class="pre">items</span></span><a class="headerlink" href="#waflite.api.BatchOut.items" title="Link to this definition"></a></dt>
+<dd><p>List of ScanOut results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[<a class="reference internal" href="#waflite.api.ScanOut" title="waflite.api.ScanOut">waflite.api.ScanOut</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.BatchOut.n">
+<span class="sig-name descname"><span class="pre">n</span></span><a class="headerlink" href="#waflite.api.BatchOut.n" title="Link to this definition"></a></dt>
+<dd><p>Total items.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.BatchOut.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#waflite.api.BatchOut.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="waflite.api.ScanIn">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.api.</span></span><span class="sig-name descname"><span class="pre">ScanIn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ip</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">req</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Annotated</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">MinLen</span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">min_length</span></span><span class="o"><span class="pre">=</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ua</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">st</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/waflite/api.html#ScanIn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.api.ScanIn" title="Link to this definition"></a></dt>
+<dd><p>Input schema for scan endpoints.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanIn.ip">
+<span class="sig-name descname"><span class="pre">ip</span></span><a class="headerlink" href="#waflite.api.ScanIn.ip" title="Link to this definition"></a></dt>
+<dd><p>Client IP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanIn.req">
+<span class="sig-name descname"><span class="pre">req</span></span><a class="headerlink" href="#waflite.api.ScanIn.req" title="Link to this definition"></a></dt>
+<dd><p>Request line, e.g. “GET /?q=x HTTP/1.1”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanIn.ua">
+<span class="sig-name descname"><span class="pre">ua</span></span><a class="headerlink" href="#waflite.api.ScanIn.ua" title="Link to this definition"></a></dt>
+<dd><p>User-Agent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanIn.st">
+<span class="sig-name descname"><span class="pre">st</span></span><a class="headerlink" href="#waflite.api.ScanIn.st" title="Link to this definition"></a></dt>
+<dd><p>HTTP status if known (0 otherwise).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanIn.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#waflite.api.ScanIn.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="waflite.api.ScanOut">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.api.</span></span><span class="sig-name descname"><span class="pre">ScanOut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/waflite/api.html#ScanOut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.api.ScanOut" title="Link to this definition"></a></dt>
+<dd><p>Output schema for scan endpoints.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanOut.scr">
+<span class="sig-name descname"><span class="pre">scr</span></span><a class="headerlink" href="#waflite.api.ScanOut.scr" title="Link to this definition"></a></dt>
+<dd><p>Score.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanOut.dec">
+<span class="sig-name descname"><span class="pre">dec</span></span><a class="headerlink" href="#waflite.api.ScanOut.dec" title="Link to this definition"></a></dt>
+<dd><p>Decision: “allow” or “block”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanOut.thr">
+<span class="sig-name descname"><span class="pre">thr</span></span><a class="headerlink" href="#waflite.api.ScanOut.thr" title="Link to this definition"></a></dt>
+<dd><p>Threshold used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanOut.m">
+<span class="sig-name descname"><span class="pre">m</span></span><a class="headerlink" href="#waflite.api.ScanOut.m" title="Link to this definition"></a></dt>
+<dd><p>Matched rule ids.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.ScanOut.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#waflite.api.ScanOut.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="waflite.api.StatsOut">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">waflite.api.</span></span><span class="sig-name descname"><span class="pre">StatsOut</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">up_s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scans</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/waflite/api.html#StatsOut"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.api.StatsOut" title="Link to this definition"></a></dt>
+<dd><p>Simple runtime stats.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.StatsOut.up_s">
+<span class="sig-name descname"><span class="pre">up_s</span></span><a class="headerlink" href="#waflite.api.StatsOut.up_s" title="Link to this definition"></a></dt>
+<dd><p>Uptime seconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.StatsOut.scans">
+<span class="sig-name descname"><span class="pre">scans</span></span><a class="headerlink" href="#waflite.api.StatsOut.scans" title="Link to this definition"></a></dt>
+<dd><p>Total scans handled.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.StatsOut.blocks">
+<span class="sig-name descname"><span class="pre">blocks</span></span><a class="headerlink" href="#waflite.api.StatsOut.blocks" title="Link to this definition"></a></dt>
+<dd><p>Total blocks decided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="waflite.api.StatsOut.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#waflite.api.StatsOut.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="waflite.api.mk_api">
+<span class="sig-prename descclassname"><span class="pre">waflite.api.</span></span><span class="sig-name descname"><span class="pre">mk_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dbp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FastAPI</span></span></span><a class="reference internal" href="_modules/waflite/api.html#mk_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#waflite.api.mk_api" title="Link to this definition"></a></dt>
+<dd><p>Create FastAPI WAF API application.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dbp</strong> – Path to rules database json.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>FastAPI app.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

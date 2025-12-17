@@ -1,0 +1,11 @@
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container">
+    <a class="navbar-brand" href="/shop">demo shop</a>
+    <div class="d-flex gap-2 align-items-center">
+      <a class="btn btn-outline-secondary btn-sm" href="/ui">waf panel</a>
+      <a class="btn btn-outline-primary btn-sm" href="/shop/cart">
+        корзина <span class="badge text-bg-primary">{{ (cart.cnt if cart else 0) }}</span>
+      </a>
+    </div>
+  </div>
+</nav>

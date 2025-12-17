@@ -1,0 +1,596 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>waflite.webapp &mdash; waflite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            waflite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">waflite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">waflite.webapp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for waflite.webapp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Web app: панель правил + demo shop.</span>
+
+<span class="sd">Панель:</span>
+<span class="sd">- список правил</span>
+<span class="sd">- добавление/удаление</span>
+<span class="sd">- тест строки</span>
+
+<span class="sd">Shop (demo):</span>
+<span class="sd">- каталог, категории, поиск, сортировка</span>
+<span class="sd">- карточка товара</span>
+<span class="sd">- корзина (cookie)</span>
+<span class="sd">- checkout + создание заказа (в памяти, на время процесса)</span>
+
+<span class="sd">WAF: middleware для /shop и /api/shop.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Form</span><span class="p">,</span> <span class="n">HTTPException</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span><span class="p">,</span> <span class="n">PlainTextResponse</span><span class="p">,</span> <span class="n">JSONResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.templating</span><span class="w"> </span><span class="kn">import</span> <span class="n">Jinja2Templates</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rl</span><span class="p">,</span> <span class="n">nrq</span><span class="p">,</span> <span class="n">scr</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">CfgErr</span>
+
+
+<div class="viewcode-block" id="DbErr">
+<a class="viewcode-back" href="../../api.html#waflite.webapp.DbErr">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DbErr</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ошибка хранилища правил.&quot;&quot;&quot;</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ld_db</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load rules db json.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: Path to db json.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict with keys: thr, ign_ua, rls.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;thr&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s2">&quot;ign_ua&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;rls&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DbErr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;не могу прочитать db: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DbErr</span><span class="p">(</span><span class="s2">&quot;db должен быть json&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">DbErr</span><span class="p">(</span><span class="s2">&quot;db root должен быть object&quot;</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;thr&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;ign_ua&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;rls&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sv_db</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save rules db json.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        p: Path.</span>
+<span class="sd">        d: Dict to save.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DbErr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;не могу записать db: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mk_rl</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Rl</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make rule from dict.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Rl</span><span class="p">(</span>
+            <span class="n">rid</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;rid&quot;</span><span class="p">]),</span>
+            <span class="n">rtp</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;rtp&quot;</span><span class="p">]),</span>
+            <span class="n">w</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;w&quot;</span><span class="p">]),</span>
+            <span class="n">ps</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ps&quot;</span><span class="p">,</span> <span class="p">()))),</span>
+            <span class="n">fld</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fld&quot;</span><span class="p">,</span> <span class="s2">&quot;req&quot;</span><span class="p">)),</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">CfgErr</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;нет поля: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_idn</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize id.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="p">(</span><span class="n">s</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">ch</span><span class="o">.</span><span class="n">isalnum</span><span class="p">()</span> <span class="ow">or</span> <span class="n">ch</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">))[:</span><span class="mi">40</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_waf_do</span><span class="p">(</span><span class="n">db</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">rq</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run WAF scoring and decision.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        db: db dict (thr, ign_ua, rls).</span>
+<span class="sd">        rq: request dict (ip, req, ua, st).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Result dict with scr, dec, m.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">thr</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;thr&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">))</span>
+    <span class="n">ign</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ign_ua&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="n">rls</span> <span class="o">=</span> <span class="p">[</span><span class="n">_mk_rl</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rls&quot;</span><span class="p">,</span> <span class="p">[])]</span>
+    <span class="n">nr</span> <span class="o">=</span> <span class="n">nrq</span><span class="p">(</span><span class="n">rq</span><span class="p">)</span>
+    <span class="n">s</span><span class="p">,</span> <span class="n">ms</span> <span class="o">=</span> <span class="n">scr</span><span class="p">(</span><span class="n">rls</span><span class="p">,</span> <span class="n">nr</span><span class="p">)</span>
+    <span class="n">ua</span> <span class="o">=</span> <span class="n">nr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ua&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">ua</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ign</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">s</span> <span class="o">-</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;scr&quot;</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span> <span class="s2">&quot;dec&quot;</span><span class="p">:</span> <span class="n">dec</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">thr</span><span class="p">),</span> <span class="s2">&quot;m&quot;</span><span class="p">:</span> <span class="n">ms</span><span class="p">,</span> <span class="s2">&quot;thr&quot;</span><span class="p">:</span> <span class="n">thr</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_itms</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;USB Rubber Ducky (demo)&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pr&quot;</span><span class="p">:</span> <span class="mi">1999</span><span class="p">,</span>
+            <span class="s2">&quot;cat&quot;</span><span class="p">:</span> <span class="s2">&quot;pentest&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stk&quot;</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>
+            <span class="s2">&quot;ds&quot;</span><span class="p">:</span> <span class="s2">&quot;HID-инъекция. Учебный товар.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rt&quot;</span><span class="p">:</span> <span class="mf">4.7</span><span class="p">,</span>
+            <span class="s2">&quot;rv&quot;</span><span class="p">:</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;YubiKey (demo)&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pr&quot;</span><span class="p">:</span> <span class="mi">5999</span><span class="p">,</span>
+            <span class="s2">&quot;cat&quot;</span><span class="p">:</span> <span class="s2">&quot;auth&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stk&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
+            <span class="s2">&quot;ds&quot;</span><span class="p">:</span> <span class="s2">&quot;2FA ключ. Учебный товар.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rt&quot;</span><span class="p">:</span> <span class="mf">4.9</span><span class="p">,</span>
+            <span class="s2">&quot;rv&quot;</span><span class="p">:</span> <span class="mi">981</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;Wi‑Fi Adapter (demo)&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pr&quot;</span><span class="p">:</span> <span class="mi">1299</span><span class="p">,</span>
+            <span class="s2">&quot;cat&quot;</span><span class="p">:</span> <span class="s2">&quot;net&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stk&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>
+            <span class="s2">&quot;ds&quot;</span><span class="p">:</span> <span class="s2">&quot;Адаптер для лабораторных работ.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rt&quot;</span><span class="p">:</span> <span class="mf">4.2</span><span class="p">,</span>
+            <span class="s2">&quot;rv&quot;</span><span class="p">:</span> <span class="mi">77</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;RFID Reader (demo)&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pr&quot;</span><span class="p">:</span> <span class="mi">2499</span><span class="p">,</span>
+            <span class="s2">&quot;cat&quot;</span><span class="p">:</span> <span class="s2">&quot;rf&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stk&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+            <span class="s2">&quot;ds&quot;</span><span class="p">:</span> <span class="s2">&quot;Ридер для тестового стенда.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rt&quot;</span><span class="p">:</span> <span class="mf">4.3</span><span class="p">,</span>
+            <span class="s2">&quot;rv&quot;</span><span class="p">:</span> <span class="mi">54</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;Cable Set (demo)&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pr&quot;</span><span class="p">:</span> <span class="mi">499</span><span class="p">,</span>
+            <span class="s2">&quot;cat&quot;</span><span class="p">:</span> <span class="s2">&quot;misc&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;stk&quot;</span><span class="p">:</span> <span class="mi">120</span><span class="p">,</span>
+            <span class="s2">&quot;ds&quot;</span><span class="p">:</span> <span class="s2">&quot;Набор кабелей.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;rt&quot;</span><span class="p">:</span> <span class="mf">4.1</span><span class="p">,</span>
+            <span class="s2">&quot;rv&quot;</span><span class="p">:</span> <span class="mi">210</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cats</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;Все&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;auth&quot;</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;Auth&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;net&quot;</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;pentest&quot;</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;Pentest&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;rf&quot;</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;RF&quot;</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;misc&quot;</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="s2">&quot;Misc&quot;</span><span class="p">},</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_flt</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cat</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">srt</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="n">its</span> <span class="o">=</span> <span class="n">_itms</span><span class="p">()</span>
+    <span class="n">q2</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">cat</span> <span class="ow">and</span> <span class="n">cat</span> <span class="o">!=</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+        <span class="n">its</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">its</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;cat&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">cat</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">q2</span><span class="p">:</span>
+        <span class="n">its</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">its</span> <span class="k">if</span> <span class="n">q2</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;nm&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="n">q2</span> <span class="ow">in</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;ds&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="n">srt</span> <span class="o">==</span> <span class="s2">&quot;pr_asc&quot;</span><span class="p">:</span>
+        <span class="n">its</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">its</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;pr&quot;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">srt</span> <span class="o">==</span> <span class="s2">&quot;pr_desc&quot;</span><span class="p">:</span>
+        <span class="n">its</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">its</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;pr&quot;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">srt</span> <span class="o">==</span> <span class="s2">&quot;rt_desc&quot;</span><span class="p">:</span>
+        <span class="n">its</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">its</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;rt&quot;</span><span class="p">]),</span> <span class="o">-</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;rv&quot;</span><span class="p">])))</span>
+    <span class="k">return</span> <span class="n">its</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load cart from cookie.&quot;&quot;&quot;</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cart&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">))]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">continue</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ck_sv</span><span class="p">(</span><span class="n">resp</span><span class="p">:</span> <span class="n">RedirectResponse</span> <span class="o">|</span> <span class="n">HTMLResponse</span> <span class="o">|</span> <span class="n">JSONResponse</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save cart to cookie.&quot;&quot;&quot;</span>
+    <span class="n">resp</span><span class="o">.</span><span class="n">set_cookie</span><span class="p">(</span><span class="s2">&quot;cart&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">max_age</span><span class="o">=</span><span class="mi">7</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">3600</span><span class="p">,</span> <span class="n">httponly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">samesite</span><span class="o">=</span><span class="s2">&quot;lax&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ct_sum</span><span class="p">(</span><span class="n">c</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">its</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_itms</span><span class="p">()}</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ttl</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">iid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="n">its</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">iid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">it</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">q2</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">it</span><span class="p">[</span><span class="s2">&quot;stk&quot;</span><span class="p">]))</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">it</span><span class="p">[</span><span class="s2">&quot;pr&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="n">q2</span>
+        <span class="n">ttl</span> <span class="o">+=</span> <span class="n">sm</span>
+        <span class="n">cnt</span> <span class="o">+=</span> <span class="n">q2</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">iid</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="n">it</span><span class="p">[</span><span class="s2">&quot;nm&quot;</span><span class="p">],</span> <span class="s2">&quot;pr&quot;</span><span class="p">:</span> <span class="n">it</span><span class="p">[</span><span class="s2">&quot;pr&quot;</span><span class="p">],</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="n">q2</span><span class="p">,</span> <span class="s2">&quot;sm&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">})</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="n">rows</span><span class="p">,</span> <span class="s2">&quot;ttl&quot;</span><span class="p">:</span> <span class="n">ttl</span><span class="p">,</span> <span class="s2">&quot;cnt&quot;</span><span class="p">:</span> <span class="n">cnt</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="mk_app">
+<a class="viewcode-back" href="../../api.html#waflite.webapp.mk_app">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mk_app</span><span class="p">(</span><span class="n">dbp</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create FastAPI app.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dbp: Path to rules db json.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        FastAPI app.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;waflite-web&quot;</span><span class="p">)</span>
+    <span class="n">tpls</span> <span class="o">=</span> <span class="n">Jinja2Templates</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;tpls&quot;</span><span class="p">))</span>
+
+    <span class="n">ords</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">gdb</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">_ld_db</span><span class="p">(</span><span class="n">dbp</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">sdb</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_sv_db</span><span class="p">(</span><span class="n">dbp</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">middleware</span><span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">waf_mw</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">call_next</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/shop&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/api/shop&quot;</span><span class="p">):</span>
+            <span class="n">db</span> <span class="o">=</span> <span class="n">gdb</span><span class="p">()</span>
+            <span class="n">ip</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">host</span> <span class="k">if</span> <span class="n">req</span><span class="o">.</span><span class="n">client</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">ua</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;user-agent&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">qs</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">req</span><span class="o">.</span><span class="n">method</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">p</span><span class="si">}{</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">qs</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">qs</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2"> HTTP/1.1&quot;</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_waf_do</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="n">ip</span><span class="p">,</span> <span class="s2">&quot;req&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span> <span class="s2">&quot;ua&quot;</span><span class="p">:</span> <span class="n">ua</span><span class="p">,</span> <span class="s2">&quot;st&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+            <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;dec&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;block&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">PlainTextResponse</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;blocked by waflite (scr=</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;scr&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, thr=</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;thr&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, m=</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                    <span class="n">status_code</span><span class="o">=</span><span class="mi">403</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">call_next</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+
+    <span class="c1"># --- UI</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ui_root</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/ui&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">302</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/ui&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ui</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">gdb</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">tpls</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span><span class="s2">&quot;ui.html&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">req</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">:</span> <span class="n">db</span><span class="p">,</span> <span class="s2">&quot;msg&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ui/thr&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ui_thr</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">thr</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">)):</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">gdb</span><span class="p">()</span>
+        <span class="n">db</span><span class="p">[</span><span class="s2">&quot;thr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">thr</span><span class="p">)</span>
+        <span class="n">sdb</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/ui&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ui/ign&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ui_ign</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">ign</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)):</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">gdb</span><span class="p">()</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ign</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="n">db</span><span class="p">[</span><span class="s2">&quot;ign_ua&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xs</span>
+        <span class="n">sdb</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/ui&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ui/rl/add&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ui_add</span><span class="p">(</span>
+        <span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
+        <span class="n">rid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+        <span class="n">rtp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+        <span class="n">wv</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+        <span class="n">fld</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="s2">&quot;req&quot;</span><span class="p">),</span>
+        <span class="n">ps</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">gdb</span><span class="p">()</span>
+        <span class="n">rid2</span> <span class="o">=</span> <span class="n">_idn</span><span class="p">(</span><span class="n">rid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rid2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="s2">&quot;bad rid&quot;</span><span class="p">)</span>
+        <span class="n">pats</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">ps</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="n">db</span><span class="p">[</span><span class="s2">&quot;rls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rls&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rid&quot;</span><span class="p">))</span> <span class="o">!=</span> <span class="n">rid2</span><span class="p">]</span>
+        <span class="n">db</span><span class="p">[</span><span class="s2">&quot;rls&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;rid&quot;</span><span class="p">:</span> <span class="n">rid2</span><span class="p">,</span> <span class="s2">&quot;rtp&quot;</span><span class="p">:</span> <span class="n">rtp</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">wv</span><span class="p">),</span> <span class="s2">&quot;ps&quot;</span><span class="p">:</span> <span class="n">pats</span><span class="p">,</span> <span class="s2">&quot;fld&quot;</span><span class="p">:</span> <span class="n">fld</span><span class="p">})</span>
+        <span class="n">sdb</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/ui&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ui/rl/del&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ui_del</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">rid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">)):</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">gdb</span><span class="p">()</span>
+        <span class="n">rid2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">rid</span><span class="p">)</span>
+        <span class="n">db</span><span class="p">[</span><span class="s2">&quot;rls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rls&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rid&quot;</span><span class="p">))</span> <span class="o">!=</span> <span class="n">rid2</span><span class="p">]</span>
+        <span class="n">sdb</span><span class="p">(</span><span class="n">db</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/ui&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/ui/tst&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ui_tst</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">reqln</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">ua</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)):</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">gdb</span><span class="p">()</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">_waf_do</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span> <span class="s2">&quot;req&quot;</span><span class="p">:</span> <span class="n">reqln</span><span class="p">,</span> <span class="s2">&quot;ua&quot;</span><span class="p">:</span> <span class="n">ua</span><span class="p">,</span> <span class="s2">&quot;st&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;scr=</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;scr&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> thr=</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;thr&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> dec=</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;dec&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> m=</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">tpls</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span><span class="s2">&quot;ui.html&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">req</span><span class="p">,</span> <span class="s2">&quot;db&quot;</span><span class="p">:</span> <span class="n">db</span><span class="p">,</span> <span class="s2">&quot;msg&quot;</span><span class="p">:</span> <span class="n">msg</span><span class="p">})</span>
+
+    <span class="c1"># --- API rules</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/api/rls&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_rls</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">(</span><span class="n">gdb</span><span class="p">())</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;/api/rls&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_put</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="s2">&quot;bad json&quot;</span><span class="p">)</span>
+        <span class="n">_sv_db</span><span class="p">(</span><span class="n">dbp</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/tst&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_tst</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">gdb</span><span class="p">()</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">_waf_do</span><span class="p">(</span>
+            <span class="n">db</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;ip&quot;</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="s2">&quot;req&quot;</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;req&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="s2">&quot;ua&quot;</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ua&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="s2">&quot;st&quot;</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;st&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)},</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="c1"># --- API shop</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/api/shop/items&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_items</span><span class="p">(</span><span class="n">q</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">cat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="n">srt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rt_desc&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="n">_flt</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">cat</span><span class="p">,</span> <span class="n">srt</span><span class="p">),</span> <span class="s2">&quot;cats&quot;</span><span class="p">:</span> <span class="n">_cats</span><span class="p">()}</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/api/shop/cart&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_cart</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_ct_sum</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/shop/cart/add&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_cart_add</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">iid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">c</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">iid</span><span class="p">))]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">iid</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">JSONResponse</span><span class="p">({</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+        <span class="n">_ck_sv</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/shop/cart/rm&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_cart_rm</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">iid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">)):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">iid</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">JSONResponse</span><span class="p">({</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+        <span class="n">_ck_sv</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/shop/order&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_ord</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">nm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">em</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">ad</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">pm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="s2">&quot;card&quot;</span><span class="p">)):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">_ct_sum</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sm</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">({</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;err&quot;</span><span class="p">:</span> <span class="s2">&quot;empty cart&quot;</span><span class="p">},</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+        <span class="n">oid</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_hex</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">ords</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">oid</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="n">nm</span><span class="p">,</span> <span class="s2">&quot;em&quot;</span><span class="p">:</span> <span class="n">em</span><span class="p">,</span> <span class="s2">&quot;ad&quot;</span><span class="p">:</span> <span class="n">ad</span><span class="p">,</span> <span class="s2">&quot;pm&quot;</span><span class="p">:</span> <span class="n">pm</span><span class="p">,</span> <span class="s2">&quot;ttl&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">[</span><span class="s2">&quot;ttl&quot;</span><span class="p">],</span> <span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]}</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">JSONResponse</span><span class="p">({</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">oid</span><span class="p">})</span>
+        <span class="n">_ck_sv</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/api/shop/order/</span><span class="si">{oid}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">api_ord_get</span><span class="p">(</span><span class="n">oid</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">ords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">o</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="s2">&quot;no order&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">o</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/api/shop/login&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_lg</span><span class="p">(</span><span class="n">u</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">p</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="s2">&quot;admin&quot;</span> <span class="ow">and</span> <span class="n">p</span> <span class="o">==</span> <span class="s2">&quot;admin&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;admin&quot;</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">JSONResponse</span><span class="p">({</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">401</span><span class="p">)</span>
+
+    <span class="c1"># --- Shop UI</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/shop&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_root</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">cat</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="n">srt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rt_desc&quot;</span><span class="p">):</span>
+        <span class="n">its</span> <span class="o">=</span> <span class="n">_flt</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">cat</span><span class="p">,</span> <span class="n">srt</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">_ct_sum</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tpls</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span>
+            <span class="s2">&quot;shop.html&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">req</span><span class="p">,</span> <span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="n">q</span><span class="p">,</span> <span class="s2">&quot;cat&quot;</span><span class="p">:</span> <span class="n">cat</span><span class="p">,</span> <span class="s2">&quot;srt&quot;</span><span class="p">:</span> <span class="n">srt</span><span class="p">,</span> <span class="s2">&quot;cats&quot;</span><span class="p">:</span> <span class="n">_cats</span><span class="p">(),</span> <span class="s2">&quot;it&quot;</span><span class="p">:</span> <span class="n">its</span><span class="p">,</span> <span class="s2">&quot;cart&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">,</span> <span class="s2">&quot;msg&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/shop/item/</span><span class="si">{iid}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_i</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">iid</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_itms</span><span class="p">()</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">iid</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">it</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="s2">&quot;no item&quot;</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">_ct_sum</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tpls</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span><span class="s2">&quot;item.html&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">req</span><span class="p">,</span> <span class="s2">&quot;it&quot;</span><span class="p">:</span> <span class="n">it</span><span class="p">,</span> <span class="s2">&quot;cart&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/shop/cart/add&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_ca</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">iid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">c</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">iid</span><span class="p">))]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">iid</span><span class="p">)),</span> <span class="mi">0</span><span class="p">))</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/shop/cart&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+        <span class="n">_ck_sv</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/shop/cart&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_cart</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">_ct_sum</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tpls</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span><span class="s2">&quot;cart.html&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">req</span><span class="p">,</span> <span class="s2">&quot;cart&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/shop/cart/rm&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_cart_rm</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">iid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">)):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">iid</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/shop/cart&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+        <span class="n">_ck_sv</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/shop/checkout&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_chk</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">_ct_sum</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sm</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/shop/cart&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tpls</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span><span class="s2">&quot;checkout.html&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">req</span><span class="p">,</span> <span class="s2">&quot;cart&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">,</span> <span class="s2">&quot;err&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">})</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/shop/checkout&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_chk_post</span><span class="p">(</span>
+        <span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
+        <span class="n">nm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+        <span class="n">em</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+        <span class="n">ad</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+        <span class="n">pm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Form</span><span class="p">(</span><span class="s2">&quot;card&quot;</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">_ck_ld</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">_ct_sum</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sm</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;/shop/cart&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;@&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">em</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">nm</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">ad</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tpls</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span><span class="s2">&quot;checkout.html&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">req</span><span class="p">,</span> <span class="s2">&quot;cart&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">,</span> <span class="s2">&quot;err&quot;</span><span class="p">:</span> <span class="s2">&quot;проверь поля&quot;</span><span class="p">})</span>
+        <span class="n">oid</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_hex</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+        <span class="n">ords</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">oid</span><span class="p">,</span> <span class="s2">&quot;nm&quot;</span><span class="p">:</span> <span class="n">nm</span><span class="p">,</span> <span class="s2">&quot;em&quot;</span><span class="p">:</span> <span class="n">em</span><span class="p">,</span> <span class="s2">&quot;ad&quot;</span><span class="p">:</span> <span class="n">ad</span><span class="p">,</span> <span class="s2">&quot;pm&quot;</span><span class="p">:</span> <span class="n">pm</span><span class="p">,</span> <span class="s2">&quot;ttl&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">[</span><span class="s2">&quot;ttl&quot;</span><span class="p">],</span> <span class="s2">&quot;rows&quot;</span><span class="p">:</span> <span class="n">sm</span><span class="p">[</span><span class="s2">&quot;rows&quot;</span><span class="p">]}</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;/shop/order/</span><span class="si">{</span><span class="n">oid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
+        <span class="n">_ck_sv</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/shop/order/</span><span class="si">{oid}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sh_ord</span><span class="p">(</span><span class="n">req</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">oid</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">ords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">o</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="mi">404</span><span class="p">,</span> <span class="s2">&quot;no order&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tpls</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span><span class="s2">&quot;order.html&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">req</span><span class="p">,</span> <span class="s2">&quot;o&quot;</span><span class="p">:</span> <span class="n">o</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">app</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
